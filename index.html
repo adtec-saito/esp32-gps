@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>ESP32 GPS Map Sender</title>
+
+<link rel="stylesheet"
+ href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script
+ src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<style>
+body { margin:0; font-family:Arial; }
+#map { height:75vh; }
+button {
+  width:100%;
+  font-size:40px;
+  padding:30px;
+  border:none;
+  background:#007bff;
+  color:white;
+}
+#status {
+  text-align:center;
+  font-size:28px;
+  padding:10px;
+}
+</style>
+</head>
+<body>
+
+<div id="map"></div>
+<button onclick="getLocation()">現在位置取得＆送信</button>
+<div id="status">待機中</div>
+
+<script>
+
+// ★ ESP32のIPをここに書く
+const ESP32_IP = "http://10.99.147.182";
+
+let map = L.map('map', { maxZoom:20 }).setView([35,139], 5);
+let marker = null;
+
+L.tileLayer(
+'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+{ attribution:'© OpenStreetMap' }
+).addTo(map);
+
+function getLocation(){
+
+  document.getElementById("status").innerHTML = "取得中...";
+
+  if(!navigator.geolocation){
+    document.getElementById("status").innerHTML = "GPS未対応";
+    return;
+  }
+
+  navigator.geolocation.getCurrentPosition(
+    function(pos){
+
+      let lat = pos.coords.latitude;
+      let lon = pos.coords.longitude;
+
+      // 地図ズーム（気持ちよく）
+      map.flyTo([lat,lon], 19);
+
+      if(marker){
+        marker.setLatLng([lat,lon]);
+      }else{
+        marker = L.marker([lat,lon]).addTo(map);
+      }
+
+      // ESP32へ送信
+      fetch(`${ESP32_IP}/location?lat=${lat}&lon=${lon}`, {
+        method:"GET",
+        // mode:"no-cors"
+      });
+
+      document.getElementById("status").innerHTML =
+        "送信OK<br>" +
+        lat.toFixed(6) + " , " + lon.toFixed(6);
+
+    },
+    function(err){
+      document.getElementById("status").innerHTML =
+        "位置情報エラー: " + err.message;
+    },
+    { enableHighAccuracy:true }
+  );
+}
+
+</script>
+</body>
+</html>
