@@ -73,7 +73,7 @@ function getLocation(){
       // ESP32へ送信
       fetch(`${ESP32_IP}/location?lat=${lat}&lon=${lon}`, {
         method:"GET",
-        mode:"no-cors"
+        // mode:"no-cors"
       });
 
       document.getElementById("status").innerHTML =
