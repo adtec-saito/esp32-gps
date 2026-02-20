@@ -8,10 +8,12 @@
 
 <h2>ESP32へ座標送信</h2>
 <p id="coords">未取得</p>
+<p id="status"></p>
+
 <button onclick="getLocation()">座標取得</button>
 
 <script>
-const ESP32_IP = "http://10.99.147.182";  // ←あなたのESP32のIP
+const ESP32_IP = "http://10.99.147.182";
 
 function getLocation(){
   if(!navigator.geolocation){
@@ -27,17 +29,29 @@ function getLocation(){
       document.getElementById("coords").innerHTML =
         "緯度: " + lat + "<br>経度: " + lon;
 
-      fetch(`${ESP32_IP}/location?lat=${lat}&lon=${lon}`)
-        .then(res => res.text())
-        .then(data => console.log("ESP32:", data))
-        .catch(err => alert("ESP32送信失敗"));
-
+      sendToESP32(lat, lon);
     },
     function(err){
       alert("位置情報エラー: " + err.message);
     },
     { enableHighAccuracy: true }
   );
+}
+
+function sendToESP32(lat, lon){
+  const url = `${ESP32_IP}/location?lat=${lat}&lon=${lon}`;
+
+  fetch(url, {
+    method: "GET",
+    mode: "no-cors"   // ★ 重要
+  })
+  .then(() => {
+    document.getElementById("status").innerHTML = "ESP32へ送信しました";
+  })
+  .catch(err => {
+    document.getElementById("status").innerHTML = "送信失敗";
+    console.log(err);
+  });
 }
 </script>
 
