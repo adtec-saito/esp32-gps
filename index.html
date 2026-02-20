@@ -32,7 +32,7 @@ button {
 <div id="map"></div>
 <button onclick="getLocation()">現在位置取得＆送信</button>
 <div id="status">待機中</div>
-
+<button onclick="testSend()">送信テスト</button>
 <script>
 
 let map = L.map('map', { maxZoom:20 }).setView([35,139], 5);
@@ -49,6 +49,13 @@ setTimeout(() => {
   map.invalidateSize();
 }, 300);
 
+ function testSend(){
+  fetch("/location?lat=1&lon=2")
+    .then(res => res.text())
+    .then(txt => alert("送信OK"))
+    .catch(err => alert("送信失敗"));
+}
+ 
 function getLocation(){
 
   document.getElementById("status").innerHTML = "取得中...";
