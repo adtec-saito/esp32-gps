@@ -2,86 +2,24 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>ESP32 GPS Map</title>
 
-<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <style>
-body {
-  margin: 0;
-  font-family: Arial, sans-serif;
-}
-
-#map {
-  height: 70vh;
-}
-
-button {
-  width: 100%;
-  font-size: 40px;
-  padding: 30px;
-  border: none;
-  background-color: #007bff;
-  color: white;
-}
-
-#status {
-  text-align: center;
-  font-size: 30px;
-  padding: 10px;
-}
+#map { height: 100vh; }
 </style>
 </head>
 <body>
 
 <div id="map"></div>
-<button onclick="getLocation()">現在位置取得</button>
-<div id="status"></div>
 
 <script>
-const ESP32_IP = "http://10.99.147.182";
-
-let map = L.map('map').setView([35, 139], 5);
-let marker = null;
+var map = L.map('map').setView([35, 139], 5);
 
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
   attribution: '© OpenStreetMap'
 }).addTo(map);
-
-function getLocation(){
-  if(!navigator.geolocation){
-    alert("GPS未対応");
-    return;
-  }
-
-  navigator.geolocation.getCurrentPosition(
-    function(pos){
-      let lat = pos.coords.latitude;
-      let lon = pos.coords.longitude;
-
-      map.setView([lat, lon], 18);
-
-      if(marker){
-        marker.setLatLng([lat, lon]);
-      } else {
-        marker = L.marker([lat, lon]).addTo(map);
-      }
-
-      document.getElementById("status").innerHTML =
-        lat.toFixed(6) + " , " + lon.toFixed(6);
-
-      fetch(`${ESP32_IP}/location?lat=${lat}&lon=${lon}`, {
-        method: "GET",
-        mode: "no-cors"
-      });
-    },
-    function(err){
-      alert("位置情報エラー: " + err.message);
-    },
-    { enableHighAccuracy: true }
-  );
-}
 </script>
 
 </body>
