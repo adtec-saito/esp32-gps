@@ -2,54 +2,52 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>ESP32 GPS Sender</title>
+<title>ESP32 GPS Map</title>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
 <style>
 body {
+  margin: 0;
   font-family: Arial, sans-serif;
-  text-align: center;
-  margin: 40px;
 }
 
-h2 {
-  font-size: 70px;
-  margin-bottom: 40px;
-}
-
-#coords {
-  font-size: 80px;
-  font-weight: bold;
-  margin: 60px 0;
-  line-height: 1.4;
-}
-
-#status {
-  font-size: 50px;
-  margin-bottom: 40px;
+#map {
+  height: 70vh;
 }
 
 button {
-  font-size: 60px;
-  padding: 40px 80px;
-  border-radius: 25px;
+  width: 100%;
+  font-size: 40px;
+  padding: 30px;
   border: none;
   background-color: #007bff;
   color: white;
 }
-</style>
 
+#status {
+  text-align: center;
+  font-size: 30px;
+  padding: 10px;
+}
+</style>
 </head>
 <body>
 
-<h2>座標送信</h2>
-
-<p id="coords">未取得</p>
-<p id="status"></p>
-
-<button onclick="getLocation()">取得</button>
+<div id="map"></div>
+<button onclick="getLocation()">現在位置取得</button>
+<div id="status"></div>
 
 <script>
 const ESP32_IP = "http://10.99.147.182";
+
+let map = L.map('map').setView([35, 139], 5);
+let marker = null;
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '© OpenStreetMap'
+}).addTo(map);
 
 function getLocation(){
   if(!navigator.geolocation){
@@ -62,31 +60,27 @@ function getLocation(){
       let lat = pos.coords.latitude;
       let lon = pos.coords.longitude;
 
-      document.getElementById("coords").innerHTML =
-        lat.toFixed(6) + "<br>" + lon.toFixed(6);
+      map.setView([lat, lon], 18);
 
-      sendToESP32(lat, lon);
+      if(marker){
+        marker.setLatLng([lat, lon]);
+      } else {
+        marker = L.marker([lat, lon]).addTo(map);
+      }
+
+      document.getElementById("status").innerHTML =
+        lat.toFixed(6) + " , " + lon.toFixed(6);
+
+      fetch(`${ESP32_IP}/location?lat=${lat}&lon=${lon}`, {
+        method: "GET",
+        mode: "no-cors"
+      });
     },
     function(err){
       alert("位置情報エラー: " + err.message);
     },
     { enableHighAccuracy: true }
   );
-}
-
-function sendToESP32(lat, lon){
-  fetch(`${ESP32_IP}/location?lat=${lat}&lon=${lon}`, {
-    method: "GET",
-    mode: "no-cors"
-  })
-  .then(() => {
-    document.getElementById("status").innerHTML = "送信OK";
-    document.getElementById("status").style.color = "green";
-  })
-  .catch(() => {
-    document.getElementById("status").innerHTML = "送信失敗";
-    document.getElementById("status").style.color = "red";
-  });
 }
 </script>
 
