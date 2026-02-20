@@ -35,16 +35,19 @@ button {
 
 <script>
 
-// ★ ESP32のIPをここに書く
-const ESP32_IP = "http://10.99.147.182";
-
 let map = L.map('map', { maxZoom:20 }).setView([35,139], 5);
 let marker = null;
 
+// OpenStreetMapタイル
 L.tileLayer(
 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
 { attribution:'© OpenStreetMap' }
 ).addTo(map);
+
+// サイズずれ対策
+setTimeout(() => {
+  map.invalidateSize();
+}, 300);
 
 function getLocation(){
 
@@ -61,7 +64,7 @@ function getLocation(){
       let lat = pos.coords.latitude;
       let lon = pos.coords.longitude;
 
-      // 地図ズーム（気持ちよく）
+      // ズーム移動
       map.flyTo([lat,lon], 19);
 
       setTimeout(() => {
@@ -71,22 +74,19 @@ function getLocation(){
           marker = L.marker([lat,lon]).addTo(map);
         }
       }, 300);
-     
-      if(marker){
-        marker.setLatLng([lat,lon]);
-      }else{
-        marker = L.marker([lat,lon]).addTo(map);
-      }
 
-      // ESP32へ送信
-      fetch(`${ESP32_IP}/location?lat=${lat}&lon=${lon}`, {
-        method:"GET",
-        // mode:"no-cors"
-      });
-
-      document.getElementById("status").innerHTML =
-        "送信OK<br>" +
-        lat.toFixed(6) + " , " + lon.toFixed(6);
+      // ★ IPを書かずに現在サーバーへ送信
+      fetch(`/location?lat=${lat}&lon=${lon}`)
+        .then(res => res.text())
+        .then(txt => {
+          document.getElementById("status").innerHTML =
+            "送信成功<br>" +
+            lat.toFixed(6) + " , " + lon.toFixed(6);
+        })
+        .catch(err => {
+          document.getElementById("status").innerHTML =
+            "送信失敗";
+        });
 
     },
     function(err){
