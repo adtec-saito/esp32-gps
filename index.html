@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>ESP32 GPS Sender</title>
+</head>
+<body>
+
+<h2>ESP32へ座標送信</h2>
+<p id="coords">未取得</p>
+<button onclick="getLocation()">座標取得</button>
+
+<script>
+const ESP32_IP = "http://10.99.147.182";  // ←あなたのESP32のIP
+
+function getLocation(){
+  if(!navigator.geolocation){
+    alert("GPS未対応");
+    return;
+  }
+
+  navigator.geolocation.getCurrentPosition(
+    function(pos){
+      let lat = pos.coords.latitude;
+      let lon = pos.coords.longitude;
+
+      document.getElementById("coords").innerHTML =
+        "緯度: " + lat + "<br>経度: " + lon;
+
+      fetch(`${ESP32_IP}/location?lat=${lat}&lon=${lon}`)
+        .then(res => res.text())
+        .then(data => console.log("ESP32:", data))
+        .catch(err => alert("ESP32送信失敗"));
+
+    },
+    function(err){
+      alert("位置情報エラー: " + err.message);
+    },
+    { enableHighAccuracy: true }
+  );
+}
+</script>
+
+</body>
+</html>
